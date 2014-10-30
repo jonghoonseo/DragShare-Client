@@ -3,6 +3,7 @@ package kr.dragshare.dragshare_client;
 import java.net.InetAddress;
 
 import kr.dragshare.dragshare_client.networkManager.FTPNetworkManager;
+import kr.dragshare.server.OSCPacketAddresses;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -86,26 +87,27 @@ public class SenderFragment extends Fragment {
 	
 	//=======================================================================================
 	//===		OSC Asynchronous Task 
-	public class OSCTask extends AsyncTask<String, Void, Void> {		
+	public class OSCTask extends AsyncTask<String, Void, String> {		
 		@Override
-		protected Void doInBackground(String... params) {
+		protected String doInBackground(String... params) {
 			// Sending OSC packet
 			//----------------------------------------------------
 			try {
 				OSCPortOut sender = new OSCPortOut(InetAddress.getByName("165.132.107.90"), 3746);
-				OSCMessage msg = new OSCMessage("/dragshare/sender", new Object[]{params[0], Util.getCurrentTimeString()});
+				OSCMessage msg = new OSCMessage(OSCPacketAddresses.OSC_SENDER_ID_PACKET, new Object[]{params[0], Util.getCurrentTimeString()});
 
 				sender.send(msg);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			return null;
+			return params[0];
 		}
 		
-		protected void onPostExecute(Void result) {
-			EditText log = (EditText)rootView.findViewById(R.id.editText1);
-			log.setText("OSC sent");
+		protected void onPostExecute(String result) {
 			super.onPostExecute(result);
+
+			EditText log = (EditText)rootView.findViewById(R.id.editText1);
+			log.setText("OSC sent: " + result);
 		}
 	}
 	//=======================================================================================
@@ -168,6 +170,12 @@ public class SenderFragment extends Fragment {
 	    cursor.close();
 	    
 	    return null;
+	}
+
+	@Override
+	public void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
 	}
 
 }

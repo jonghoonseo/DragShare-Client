@@ -4,7 +4,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import android.provider.Settings.Secure;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.view.View;
 
 public class Util {
@@ -17,7 +18,33 @@ public class Util {
 	
 	// DeviceID
 	public static final String getDeviceID(View v) {
-		return Secure.getString(v.getContext().getContentResolver(), Secure.ANDROID_ID);
+		// IP Address 가져오기
+		WifiManager wifiManager = (WifiManager)v.getContext().getApplicationContext().getSystemService(
+												v.getContext().getApplicationContext().WIFI_SERVICE);
+		WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+		int ipAddress = wifiInfo.getIpAddress();
+		int addr1 = (ipAddress & 0xff);
+		int addr2 = (ipAddress >> 8 & 0xff);
+		int addr3 = (ipAddress >> 16 & 0xff);
+		int addr4 = (ipAddress >> 24 & 0xff);
+		return String.format("%d.%d.%d.%d", addr1, addr2, addr3, addr4);
+		
+		// 다른데서 찾은 IP Address 가져오는 코드 - IPv6 주소를 돌려주네;;;
+//		try { 
+//			for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) { 
+//				NetworkInterface intf = en.nextElement(); 
+//				for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses();  enumIpAddr.hasMoreElements(); ) { 
+//					InetAddress inetAddress = enumIpAddr.nextElement(); 
+//					if (!inetAddress.isLoopbackAddress())
+//						return inetAddress.getHostAddress().toString(); 
+//				} 
+//			} 
+//		} catch (SocketException ex) { 
+//			Log.e("Util", ex.toString()); 
+//		} 
+		
+		// UDID
+//		return Secure.getString(v.getContext().getContentResolver(), Secure.ANDROID_ID);
 	}
 	
 	// 현재 시각에 대한 문자열
