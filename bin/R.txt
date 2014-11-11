@@ -250,7 +250,7 @@ int id action_settings 0x7f050043
 int id activity_chooser_view_content 0x7f050025
 int id always 0x7f05000b
 int id beginning 0x7f050011
-int id button1 0x7f050040
+int id button1 0x7f050041
 int id button_receiver 0x7f05003e
 int id checkbox 0x7f05002d
 int id collapseActionView 0x7f05000d
@@ -289,7 +289,7 @@ int id search_mag_icon 0x7f050035
 int id search_plate 0x7f050036
 int id search_src_text 0x7f050037
 int id search_voice_btn 0x7f05003b
-int id section_label 0x7f050041
+int id section_label 0x7f050040
 int id section_label2 0x7f05003d
 int id shortcut 0x7f05002e
 int id showCustom 0x7f050007

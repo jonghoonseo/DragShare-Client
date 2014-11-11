@@ -10,28 +10,28 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.SocketException;
 
-import kr.dragshare.dragshare_client.MainActivity;
 import kr.dragshare.dragshare_client.Util;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
-import org.apache.commons.net.io.CopyStreamEvent;
-import org.apache.commons.net.io.CopyStreamListener;
 
 import android.util.Log;
 
 /**
- * FTP ÀÛ¾÷À» ¼öÇàÇÏ´Â Wrapper Class ÀÔ´Ï´Ù.
- * initialize, send µîÀÇ ÀÛ¾÷À» ½±°Ô ±¸ÇöÇÏ¿´½À´Ï´Ù.
- * Á» ´õ ÀÚ¼¼ÇÑ ÀÛ¾÷Àº FTPClient¸¦ ÀÌ¿ëÇÏ¿© ¼öÇàÇÏ¸é µË´Ï´Ù.
- * FTPClient´Â Apache Commons ÇÁ·ÎÁ§Æ®¸¦ »ç¿ëÇÏ¿´½À´Ï´Ù.
- * ÀÚ¼¼ÇÑ ³»¿ëÀº http://commons.apache.org/proper/commons-net/ ¸¦ Âü°íÇÏ¼¼¿ä.
- * FTP Client ¿¹Á¦: http://commons.apache.org/proper/commons-net/examples/ftp/FTPClientExample.java
+ * FTP ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Wrapper Class ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+ * initialize, send ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+ * ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ FTPClientï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+ * FTPClientï¿½ï¿½ Apache Commons ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ http://commons.apache.org/proper/commons-net/ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½.
+ * FTP Client ï¿½ï¿½ï¿½ï¿½: http://commons.apache.org/proper/commons-net/examples/ftp/FTPClientExample.java
  * @author Jonghoon Seo
  *
  */
 public class FTPNetworkManager implements NetworkManager {
+    public static final String TAG = "FTPNetworkManager";
+
 	public FTPClient ftp;
 	public long transferred;
 
@@ -54,7 +54,7 @@ public class FTPNetworkManager implements NetworkManager {
 		if(!isFirst)
 			return true;
 		boolean isOK = true;
-		// È£½ºÆ®¿¡ ¿¬°á 
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 
 		try {
 			ftp.connect(host, port);
 			
@@ -66,23 +66,23 @@ public class FTPNetworkManager implements NetworkManager {
 	        {
 	            ftp.disconnect();
 //	            System.err.println("Error: FTP server refused connection.");
-	            Log.e("FTP", "Error: FTP server refused connection.");
+	            Log.e(TAG, "Error: FTP server refused connection.");
 	            return false;
 	        }
 		} catch (SocketException e) {
 			System.err.println("Error: socket timeout could not be set.");
 			System.err.println(e.getMessage());
 			
-			Log.e("FTP", "Error: socket timeout could not be set.");
-			Log.e("FTP", e.getMessage());
+			Log.e(TAG, "Error: socket timeout could not be set.");
+			Log.e(TAG, e.getMessage());
 			
             return false;
 		} catch (IOException e) {
 			System.err.println("Error: the socket could not be opened. In most cases you will only want to catch IOException since SocketException is derived from it.");
 			System.err.println(e.getMessage());
 
-			Log.e("FTP", "Error: the socket could not be opened. In most cases you will only want to catch IOException since SocketException is derived from it.");
-			Log.e("FTP", e.getMessage());
+			Log.e(TAG, "Error: the socket could not be opened. In most cases you will only want to catch IOException since SocketException is derived from it.");
+			Log.e(TAG, e.getMessage());
 
             return false;		
 		}
@@ -96,8 +96,8 @@ public class FTPNetworkManager implements NetworkManager {
                 return false;
             }
 		} catch (IOException e) {
-			Log.e("FTP", "Error: an I/O error occurs while either sending a command to the server or receiving a reply from the server.");
-			Log.e("FTP", e.getMessage());
+			Log.e(TAG, "Error: an I/O error occurs while either sending a command to the server or receiving a reply from the server.");
+			Log.e(TAG, e.getMessage());
 
 			return false;
 		} 
@@ -105,7 +105,7 @@ public class FTPNetworkManager implements NetworkManager {
 		try {
 			ftp.setFileType(FTP.BINARY_FILE_TYPE);
 		} catch (IOException e) {
-			Log.e("FTP", "Set File Type Erorr");
+			Log.e(TAG, "Set File Type Erorr");
 		}
 		
 		return isOK;
@@ -122,8 +122,8 @@ public class FTPNetworkManager implements NetworkManager {
 		try {
 			stream = new FileInputStream(file); 
 		} catch (FileNotFoundException e) {
-			Log.e("FTP","Error: sending file can not be openned.");
-			Log.e("FTP", e.getMessage());
+			Log.e(TAG,"Error: sending file can not be openned.");
+			Log.e(TAG, e.getMessage());
 			
             return false;
 		}
@@ -139,8 +139,8 @@ public class FTPNetworkManager implements NetworkManager {
 		try {
 			stream = new FileInputStream(name); 
 		} catch (FileNotFoundException e) {
-			Log.e("FTP","Error: sending file can not be openned.");
-			Log.e("FTP", e.getMessage());
+			Log.e(TAG,"Error: sending file can not be openned.");
+			Log.e(TAG, e.getMessage());
 			
             return false;
 		}
@@ -157,10 +157,10 @@ public class FTPNetworkManager implements NetworkManager {
 			ftp.storeFile(targetFileName, stream);
 			stream.close();
 			
-			Log.i("FTP", "Sending Success");
+			Log.i(TAG, "Sending Success");
 		} catch (IOException e) {
-			Log.e("FTP", "Error: an I/O error occurs while either sending a command to the server or receiving a reply from the server.");
-			Log.e("FTP", e.getMessage());
+			Log.e(TAG, "Error: an I/O error occurs while either sending a command to the server or receiving a reply from the server.");
+			Log.e(TAG, e.getMessage());
 			
             return false;
 		}
@@ -172,16 +172,44 @@ public class FTPNetworkManager implements NetworkManager {
 	 */
 	@Override
 	public boolean receive(String sourceFileName, String targetFileName) {
-		FileOutputStream stream;
-		try {
-			stream = new FileOutputStream(targetFileName); 
-		} catch (FileNotFoundException e) {
-			Log.e("FTP", "Error: receiving file may be exist in local host.");
-			Log.e("FTP", e.getMessage());
-			
-            return false;
+		// Check type between src and dst 
+		if(sourceFileName.toCharArray()[sourceFileName.length()-1] == '/' && targetFileName.toCharArray()[targetFileName.length()-1] != '/'
+				|| sourceFileName.toCharArray()[sourceFileName.length()-1] != '/' && targetFileName.toCharArray()[targetFileName.length()-1] == '/') {
+			Log.e(TAG, "type mismatch between source and target");
+			return false;
 		}
-		return receive(sourceFileName, stream);
+		
+		if(sourceFileName.lastIndexOf("/") == sourceFileName.length()-1) {		// if a directory
+			// at first, check whether target directory is exist
+			File dir = new File(targetFileName);
+			if(!dir.exists())
+				dir.mkdirs();
+			
+            try {
+				for (FTPFile f : ftp.listFiles(sourceFileName)) {
+				    String fileName = f.getName();
+				    if(!receive(sourceFileName+fileName, targetFileName+fileName)) {
+				    	Log.e(TAG, "receive error");
+				    	return false;
+				    }
+				}
+			} catch (IOException e) {
+				Log.e(TAG,  e.getMessage());
+			}
+			
+			return true;
+		} else {																// if a file
+			FileOutputStream stream;
+			try {
+				stream = new FileOutputStream(targetFileName); 
+			} catch (FileNotFoundException e) {
+				Log.e(TAG, "Error: receiving file may be exist in local host.");
+				Log.e(TAG, e.getMessage());
+				
+	            return false;
+			}
+			return receive(sourceFileName, stream);
+		}
 	}
 	
 	@Override
@@ -191,8 +219,8 @@ public class FTPNetworkManager implements NetworkManager {
 			ftp.retrieveFile(sourceFileName, targetOutputStream);
 			targetOutputStream.close();
 		} catch (IOException e) {
-			Log.e("FTP", "Error: an I/O error occurs while either sending a command to the server or receiving a reply from the server.");
-			Log.e("FTP", e.getMessage());
+			Log.e(TAG, "Error: an I/O error occurs while either sending a command to the server or receiving a reply from the server.");
+			Log.e(TAG, e.getMessage());
 			
             return false;
 		}
@@ -217,8 +245,8 @@ public class FTPNetworkManager implements NetworkManager {
         }
         catch (IOException f)
         {
-        	Log.e("FTP", "closing error");
-        	Log.e("FTP", f.getMessage());
+        	Log.e(TAG, "closing error");
+        	Log.e(TAG, f.getMessage());
     		return false;
         }
 		return true;

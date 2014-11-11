@@ -3,11 +3,15 @@ package kr.dragshare.dragshare_client;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import kr.dragshare.dragshare_client.networkManager.FTPNetworkManager;
 import kr.dragshare.server.OSCPacketAddresses;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,37 +19,32 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
+import com.illposed.osc.OSCListener;
 import com.illposed.osc.OSCMessage;
 import com.illposed.osc.OSCPortIn;
 import com.illposed.osc.OSCPortOut;
 
 public class ReceiverFragment extends Fragment {
-
+    public static final String TAG = "[R]";
 	View rootView;
-	boolean isFirst = true;
 	
 	OSCPortIn server = null;
-	// TODO: 현재 문제 1. stop listening 이후에 초기 패킷은 들어옴 => Flag! 
-	// TODO: 현재 문제 2. start listening 하면 stop 동안 처리 되지 않은 패킷이 몰려서 들어옴
-
 	
 	//=======================================================================================
 	//===		FTP Asynchronous Task 
 	public class FTPTask extends AsyncTask<String, Integer, Void> {
 		FTPNetworkManager network;
 		
-		final String 	host = "165.132.107.90";
+		final String 	host = "192.168.0.14";
 		final int		port = 21;
-		final String 	id	 = "msl";
-		final String	pw	 = "0";
-		
-		String	targetPath = "/";
+		final String 	id	 = "Jonghoon_Seo";
+		final String	pw	 = "0823";
 		
 		@Override
 		protected void onPreExecute() {
-			// TODO Auto-generated method stub
 			super.onPreExecute();
 			
 			network = new FTPNetworkManager();
@@ -59,9 +58,10 @@ public class ReceiverFragment extends Fragment {
 		protected Void doInBackground(String... params) {
 			network.initialize(host, port, id, pw);
 			
-			targetPath = "/" + Util.getUniqueDirectory(rootView) + "/";
+			Log.i(TAG + "FTP", "will download from " + params[0]);
 
-			// TODO: FTP Download
+			network.receive(params[0],
+							Environment.getExternalStorageDirectory() + "/dragshare/");
 			
 			return null;
 		}
@@ -69,10 +69,11 @@ public class ReceiverFragment extends Fragment {
 		@Override
 		protected void onPostExecute(Void result) {
 			// Notify done
-			Toast.makeText(rootView.getContext(), "FTP Upload Done", Toast.LENGTH_SHORT).show();
-
+			Log.i(TAG + "FTP", "Download Done");
+			Toast.makeText(rootView.getContext(), "FTP Download Done", Toast.LENGTH_SHORT).show();
+			
 			OSCTask osc = new OSCTask();
-			osc.execute();
+			osc.execute(OSCTask.SECOND);
 			
 			super.onPostExecute(result);
 		}
@@ -91,60 +92,90 @@ public class ReceiverFragment extends Fragment {
 	
 	//=======================================================================================
 	//===		OSC Asynchronous Task 
-	public class OSCTask extends AsyncTask<Void, Void, Void> {
-
+	public class OSCTask extends AsyncTask<Boolean, Void, Void> {
+		public static final boolean FIRST = true;
+		public static final boolean SECOND = false;
 		
 		@Override
-		protected Void doInBackground(Void... params) {
+		protected Void doInBackground(Boolean... params) {
 			
-			// 처음에는 일단 연결부터
+			// OSC Sender 
 			//--------------------------------
 			OSCPortOut osc = null;
 			try {
-				osc = new OSCPortOut(InetAddress.getByName("165.132.107.90"), 3746);
+				osc = new OSCPortOut(InetAddress.getByName("192.168.0.14"), 3746);		// OSC Server
 			} catch (SocketException e1) {
-				Log.e("Receiver OSC", e1.getMessage());
+				Log.e(TAG + "OSC_out", e1.getMessage());
 			} catch (UnknownHostException e1) {
-				Log.e("Receiver OSC", e1.getMessage());
+				Log.e(TAG + "OSC_out", e1.getMessage());
 			}
 			
-
+			Log.i(TAG + "OSC_out", "Creation OK");
+			
 			try {
-				if(isFirst) {						// 첫 OSC 패킷이라면 -> 자기 자신을 등록 
-					isFirst = false;
-					
-					OSCMessage msg = new OSCMessage(OSCPacketAddresses.OSC_RECEIVER_ID_PACKET, new Object[]{Util.getDeviceID(rootView), Util.getCurrentTimeString()});
+				if(params[0]) {						// Send OSC packet - ID and turn on the server
+					List<Object> arg = new ArrayList<Object>();
+					arg.add(Util.getDeviceID(rootView));
+					arg.add(Util.getCurrentTimeString());
+					OSCMessage msg = new OSCMessage(OSCPacketAddresses.OSC_RECEIVER_ID_PACKET, arg);
 
 					osc.send(msg);
-				} else {							// 두번째 OSC 패킷이라면 -> 전송 완료를 공지
-					isFirst = true;
+					
+					Log.i(TAG + "OSC_out", "ID message is sending" + arg);
+				} else {							// Send OSC Final Packet
 					
 					OSCMessage msg = new OSCMessage(OSCPacketAddresses.OSC_RECEIVER_FINISH_PACKET, null);
-
+ 
 					osc.send(msg);
+					Log.i(TAG + "OSC_out", "Final message is sending");
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-			}
-			
+				Log.e(TAG + "OSC_out", "Sending Error");
+			}			
 			return null;
 		}
 		
 		protected void onPostExecute(Void result) {
+			Log.i(TAG + "OSC_out", "Send OK");
+
 			super.onPostExecute(result);
-			
-			if(!isFirst) {
-				Toast.makeText(getActivity(), "FTP download start", Toast.LENGTH_SHORT).show();
-			} else {
-				Toast.makeText(getActivity(), "ALL FINISH", Toast.LENGTH_SHORT).show();
-			}
-			
-			// 2. FTP로 파일 가져오기
-			// 3. OSC Listener에서 완료 여부 OSC 전송
 		}
 	}
 	//=======================================================================================
 
+	public void serverOn() {
+		try {
+			if(server == null) {
+				server = new OSCPortIn(9097);
+				
+				Log.i(TAG + "OSC Server", "created");
+			}
+			if(!server.isListening()) {
+				server.addListener(OSCPacketAddresses.OSC_SERVER_PATH_PACKET, new OSCListener() {
+
+					@Override
+					public void acceptMessage(Date arg0, OSCMessage arg1) {		// inside this method is Network Thread, so it is prohibited to control UI in the this method
+						Log.i(TAG + "OSC Server", "received");
+
+						if(server.isListening()) {
+							Log.i(TAG + "OSC Server", "Receiver: packet received: listening   " + (String)(arg1.getArguments().get(0)));
+							
+							new FTPTask().execute((String)arg1.getArguments().get(0));
+						}else
+							Log.i(TAG + "OSC Server", "Receiver: packet received: listening(Not)   " + (String)(arg1.getArguments().get(0)));
+					}
+				});
+				server.startListening();
+				
+				showText("OSC Server Start");
+			}
+		} catch (SocketException e) {
+			e.printStackTrace();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	
 	public ReceiverFragment() {
@@ -161,35 +192,39 @@ public class ReceiverFragment extends Fragment {
 			
 			@Override
 			public void onClick(View v) {
-				// 1. 자기 정보 OSC 전송
+				// 1. OSC Sending
 				OSCTask task = new OSCTask();
-				task.execute();
+				task.execute(OSCTask.FIRST);
 			}
 		});
 		
 		return rootView;
 	}
 
+	private void showText(String str) {
+		EditText log = (EditText)rootView.findViewById(R.id.editText_receiver);
+		log.setText(str);
+	}
+	
 	@Override
-	public void onResume() {
-		super.onResume();
+	public void onDestroy() {
+		server.close();
 		
-		isFirst= true;
+		super.onDestroy();
+	}
+
+
+	@Override
+	public void onStart() {
+		serverOn();
+		super.onStart();
 	}
 
 	@Override
 	public void onStop() {
+		if(server.isListening())
+			server.stopListening();
+		
 		super.onStop();
-		
-		
-		// TODO: OSC Server를 제거 해줘야 다음번 실행에서 에러가 나지 않을텐데...
-//		while(server.isListening()){
-//			server.stopListening();
-//		}
-//		server.close();
-
 	}
-	
-	
-	
 }

@@ -1,6 +1,8 @@
 package kr.dragshare.dragshare_client;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 import kr.dragshare.dragshare_client.networkManager.FTPNetworkManager;
 import kr.dragshare.server.OSCPacketAddresses;
@@ -30,10 +32,11 @@ public class SenderFragment extends Fragment {
 	public class FTPTask extends AsyncTask<String, Integer, Void> {
 		FTPNetworkManager network;
 		
-		final String 	host = "165.132.107.90";
+		final String 	host = "192.168.0.14";
 		final int		port = 21;
-		final String 	id	 = "msl";
-		final String	pw	 = "0";
+		final String 	id	 = "Jonghoon_Seo";
+		final String	pw	 = "0823";
+		final String	pathPrefix = "/Users/Jonghoon_Seo/DragShare";
 		
 		String	targetPath = "/";
 		
@@ -53,7 +56,7 @@ public class SenderFragment extends Fragment {
 		protected Void doInBackground(String... params) {
 			network.initialize(host, port, id, pw);
 			
-			targetPath = "/" + Util.getUniqueDirectory(rootView) + "/";
+			targetPath = pathPrefix + "/" + Util.getUniqueDirectory(rootView) + "/";
 
 			if(!network.send(params[0], targetPath + Util.getFileName(params[0]))){
 				Log.e("NetworkManager", "Sending Failed");
@@ -93,8 +96,13 @@ public class SenderFragment extends Fragment {
 			// Sending OSC packet
 			//----------------------------------------------------
 			try {
-				OSCPortOut sender = new OSCPortOut(InetAddress.getByName("165.132.107.90"), 3746);
-				OSCMessage msg = new OSCMessage(OSCPacketAddresses.OSC_SENDER_ID_PACKET, new Object[]{params[0], Util.getCurrentTimeString()});
+				OSCPortOut sender = new OSCPortOut(InetAddress.getByName("192.168.0.14"), 3746);
+//				OSCMessage msg = new OSCMessage(OSCPacketAddresses.OSC_SENDER_ID_PACKET, new Object[]{params[0], Util.getCurrentTimeString()});
+				List<Object> arg = new ArrayList<Object>();
+				arg.add(params[0]);
+				arg.add(Util.getCurrentTimeString());
+				OSCMessage msg = new OSCMessage(OSCPacketAddresses.OSC_SENDER_ID_PACKET, arg);
+				
 
 				sender.send(msg);
 			} catch (Exception e) {
@@ -125,7 +133,7 @@ public class SenderFragment extends Fragment {
 			
 			@Override
 			public void onClick(View v) {
-				// 1. FTP Àü¼Û
+				// 1. FTP ï¿½ï¿½ï¿½ï¿½
 	        	// Initialize FTP Task instance
 	        	FTPTask ftp = new FTPTask();
 	        	
@@ -138,7 +146,7 @@ public class SenderFragment extends Fragment {
 	        	// Go and upload
 	        	ftp.execute(lastPicture);
 				
-//				// 2. OSC Àü¼Û
+//				// 2. OSC ï¿½ï¿½ï¿½ï¿½
 //				new OSCTask().execute(Util.getDeviceIdentifier(rootView), Util.getCurrentDateString());
 			}
 		});
