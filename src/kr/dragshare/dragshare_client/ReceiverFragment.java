@@ -6,8 +6,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
-import kr.dragshare.dragshare_client.networkManager.FTPNetworkManager;
 import kr.dragshare.server.OSCPacketAddresses;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -26,66 +26,16 @@ import com.illposed.osc.OSCListener;
 import com.illposed.osc.OSCMessage;
 import com.illposed.osc.OSCPortIn;
 import com.illposed.osc.OSCPortOut;
+import com.kth.baasio.callback.BaasioDownloadAsyncTask;
+import com.kth.baasio.callback.BaasioDownloadCallback;
+import com.kth.baasio.entity.file.BaasioFile;
+import com.kth.baasio.exception.BaasioException;
 
 public class ReceiverFragment extends Fragment {
     public static final String TAG = "[R]";
 	View rootView;
 	
-	OSCPortIn server = null;
-	
-	//=======================================================================================
-	//===		FTP Asynchronous Task 
-	public class FTPTask extends AsyncTask<String, Integer, Void> {
-		FTPNetworkManager network;
-		
-		final String 	host = "192.168.0.14";
-		final int		port = 21;
-		final String 	id	 = "Jonghoon_Seo";
-		final String	pw	 = "0823";
-		
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			
-			network = new FTPNetworkManager();
-			
-			// Progress Update
-			//------------------------
-//			network.setFTPTask(this);						// to process upload progress, transfer this instance to FTPNetworkManager 
-		}
-		
-		@Override
-		protected Void doInBackground(String... params) {
-			network.initialize(host, port, id, pw);
-			
-			Log.i(TAG + "FTP", "will download from " + params[0]);
-
-			network.receive(params[0],
-							Environment.getExternalStorageDirectory() + "/dragshare/");
-			
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Void result) {
-			// Notify done
-			Log.i(TAG + "FTP", "Download Done");
-			Toast.makeText(rootView.getContext(), "FTP Download Done", Toast.LENGTH_SHORT).show();
-			
-			OSCTask osc = new OSCTask();
-			osc.execute(OSCTask.SECOND);
-			
-			super.onPostExecute(result);
-		}
-
-		@Override
-		protected void onProgressUpdate(Integer... values) {
-//        	Toast.makeText(getApplicationContext(), "transferred: " + ftp.percent + "%", Toast.LENGTH_SHORT).show();
-			super.onProgressUpdate(values);
-		}	
-	}
-	//=======================================================================================
-	
+	OSCPortIn server = null;	
 	
 	
 	
@@ -161,7 +111,8 @@ public class ReceiverFragment extends Fragment {
 						if(server.isListening()) {
 							Log.i(TAG + "OSC Server", "Receiver: packet received: listening   " + (String)(arg1.getArguments().get(0)));
 							
-							new FTPTask().execute((String)arg1.getArguments().get(0));
+							// 파일 다운로드
+							receive((String)(arg1.getArguments().get(0)));
 						}else
 							Log.i(TAG + "OSC Server", "Receiver: packet received: listening(Not)   " + (String)(arg1.getArguments().get(0)));
 					}
@@ -177,7 +128,49 @@ public class ReceiverFragment extends Fragment {
 		}
 	}
 	
-	
+	// BaaS.io 에서 파일 다운로드
+	//--------------------------
+	protected void receive(String uuidString) {
+    	String localPath = Environment.getExternalStorageDirectory() + "/dragshare/";
+    	
+    	UUID uuid = UUID.fromString(uuidString);
+
+    	BaasioFile downloadFile = new BaasioFile();
+    	downloadFile.setUuid(uuid);
+    	downloadFile.setFilename(uuidString+".jpg");
+    	
+    	// 다운로드
+    	BaasioDownloadAsyncTask downloadFileAsyncTask = downloadFile.fileDownloadInBackground(
+    	    localPath       // 다운로드 경로
+    	    , new BaasioDownloadCallback() {
+
+    	            @Override
+    	            public void onResponse(String localFilePath) {
+    	                // 성공
+    	            	EditText et = (EditText)rootView.findViewById(R.id.editText_receiver);
+    	            	et.setText("Download success");
+    	            	Toast.makeText(getActivity(), "다운로드가 성공하였습니다",	Toast.LENGTH_LONG).show();
+    	            }
+
+    	            @Override
+    	            public void onProgress(long total, long current) {
+    	                // 진행 상황
+    	            }
+
+    	            @Override
+    	            public void onException(BaasioException e) {
+    	                // 실패
+    	            	EditText et = (EditText)rootView.findViewById(R.id.editText_receiver);
+    	            	et.setText("Download failed");
+    	            	Toast.makeText(getActivity(), "다운로드가 실패하였습니다",	Toast.LENGTH_LONG).show();
+    	            	
+    	            	Log.e(TAG, "다운로드 실패: "+ e.getErrorCode());
+    	            }
+    	        });
+
+	}
+
+
 	public ReceiverFragment() {
 	}
 
