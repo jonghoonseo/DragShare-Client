@@ -3,10 +3,7 @@ package kr.dragshare.dragshare_client;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.Vector;
 
-import kr.dragshare.dragshare_client.networkManager.BaaSNetworkManager;
 import kr.dragshare.server.OSCPacketAddresses;
 import android.database.Cursor;
 import android.os.AsyncTask;
@@ -19,7 +16,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
