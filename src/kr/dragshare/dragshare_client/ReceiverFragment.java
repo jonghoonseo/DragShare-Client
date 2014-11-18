@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import kr.dragshare.dragshare_client.SenderFragment.BaasioManager;
+import kr.dragshare.dragshare_client.SenderFragment.OSCTask;
 import kr.dragshare.server.OSCPacketAddresses;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -110,9 +112,17 @@ public class ReceiverFragment extends Fragment {
 
 						if(server.isListening()) {
 							Log.i(TAG + "OSC Server", "Receiver: packet received: listening   " + (String)(arg1.getArguments().size() + " arguments are received"));
+														
+							// 파일 다운로드: 파일 1개 버전 
+//							receive((String)(arg1.getArguments().get(0)));
 							
-							// 파일 다운로드
-							receive((String)(arg1.getArguments().get(0)));
+							// 파일 다운로드: 멀티 파일
+							ArrayList<String> uuidStrings = new ArrayList<String>();
+							for(Object uuidStr : arg1.getArguments()) {
+								uuidStrings.add((String)uuidStr);
+							}
+				    		BaasioManager baas = new BaasioManager();
+							baas.receive(uuidStrings);
 						}else
 							Log.i(TAG + "OSC Server", "Receiver: packet received: listening(Not)   " + (String)(arg1.getArguments().get(0)));
 					}
@@ -128,54 +138,122 @@ public class ReceiverFragment extends Fragment {
 		}
 	}
 	
-	// BaaS.io 에서 파일 다운로드
-	//--------------------------
-	protected void receive(String uuidString) {
-    	String localPath = Environment.getExternalStorageDirectory() + "/dragshare/";
-    	
-    	UUID uuid = UUID.fromString(uuidString);
-
-    	BaasioFile downloadFile = new BaasioFile();
-    	downloadFile.setUuid(uuid);
-    	downloadFile.setFilename(uuidString+".jpg");
-    	
-    	// 다운로드
-    	@SuppressWarnings("unused")
-		BaasioDownloadAsyncTask downloadFileAsyncTask = downloadFile.fileDownloadInBackground(
-    	    localPath       // 다운로드 경로
-    	    , new BaasioDownloadCallback() {
-
-    	            @Override
-    	            public void onResponse(String localFilePath) {
-    	                // 성공
-    	            	EditText et = (EditText)rootView.findViewById(R.id.editText_receiver);
-    	            	et.setText("Download success");
-    	            	Toast.makeText(getActivity(), "다운로드가 성공하였습니다",	Toast.LENGTH_LONG).show();
-    	            }
-
-    	            @Override
-    	            public void onProgress(long total, long current) {
-    	                // 진행 상황
-    	            }
-
-    	            @Override
-    	            public void onException(BaasioException e) {
-    	                // 실패
-    	            	EditText et = (EditText)rootView.findViewById(R.id.editText_receiver);
-    	            	et.setText("Download failed");
-    	            	Toast.makeText(getActivity(), "다운로드가 실패하였습니다",	Toast.LENGTH_LONG).show();
-    	            	
-    	            	Log.e(TAG, "다운로드 실패: "+ e.getErrorCode());
-    	            }
-    	        });
-
-	}
 	
-	protected void receive(ArrayList<String> uuidStrings) {
+	public class BaasioManager {
+		public BaasioManager() {
+			
+		}
+		
+		// BaaS.io 에서 파일 다운로드
+		//--------------------------
+		public void receive(String uuidString) {
+	    	String localPath = Environment.getExternalStorageDirectory() + "/dragshare/";
+	    	
+	    	UUID uuid = UUID.fromString(uuidString);
+	
+	    	BaasioFile downloadFile = new BaasioFile();
+	    	downloadFile.setUuid(uuid);
+	    	downloadFile.setFilename(uuidString+".jpg");
+	    	
+	    	// 다운로드
+	    	@SuppressWarnings("unused")
+			BaasioDownloadAsyncTask downloadFileAsyncTask = downloadFile.fileDownloadInBackground(
+	    	    localPath       // 다운로드 경로
+	    	    , new BaasioDownloadCallback() {
+	
+	    	            @Override
+	    	            public void onResponse(String localFilePath) {
+	    	                // 성공
+	    	            	EditText et = (EditText)rootView.findViewById(R.id.editText_receiver);
+	    	            	et.setText("Download success");
+	    	            	Toast.makeText(getActivity(), "다운로드가 성공하였습니다",	Toast.LENGTH_LONG).show();
+	    	            }
+	
+	    	            @Override
+	    	            public void onProgress(long total, long current) {
+	    	                // 진행 상황
+	    	            }
+	
+	    	            @Override
+	    	            public void onException(BaasioException e) {
+	    	                // 실패
+	    	            	EditText et = (EditText)rootView.findViewById(R.id.editText_receiver);
+	    	            	et.setText("Download failed");
+	    	            	Toast.makeText(getActivity(), "다운로드가 실패하였습니다",	Toast.LENGTH_LONG).show();
+	    	            	
+	    	            	Log.e(TAG, "다운로드 실패: "+ e.getErrorCode());
+	    	            }
+	    	        });
+	
+		}
 		
 		
+		// Multi file send
+		//--------------------------------------------
+		boolean isProcessing;
+		int totalReceive;
+		int finishedReceive;
+		
+		public void doFinishedWork() {
+			finishedReceive++;
+			
+			if(finishedReceive == totalReceive) {	// 완전 끝나
+				OSCTask osc = new OSCTask();
+				
+				osc.execute(OSCTask.SECOND);		// 최종 결과 전송 
+			}
+		}
+		
+		public void receive(ArrayList<String> uuidStrings) {
+			// Multi file
+			isProcessing = true;
+			totalReceive = uuidStrings.size();
+			
+	    	String localPath = Environment.getExternalStorageDirectory() + "/dragshare/";
+	    	
+	    	for(String uuidString : uuidStrings) {
+	        	UUID uuid = UUID.fromString(uuidString);
+	
+	        	BaasioFile downloadFile = new BaasioFile();
+	        	downloadFile.setUuid(uuid);
+	        	downloadFile.setFilename(uuidString+".jpg");
+	        	
+	        	// 다운로드
+	        	@SuppressWarnings("unused")
+	    		BaasioDownloadAsyncTask downloadFileAsyncTask = downloadFile.fileDownloadInBackground(
+	        	    localPath       // 다운로드 경로
+	        	    , new BaasioDownloadCallback() {
+	
+	        	            @Override
+	        	            public void onResponse(String localFilePath) {
+	        	                // 성공
+	        	            	EditText et = (EditText)rootView.findViewById(R.id.editText_receiver);
+	        	            	et.setText("Download success - " + Util.getFileName(localFilePath));
+	        	            	Toast.makeText(getActivity(), "다운로드가 성공하였습니다",	Toast.LENGTH_LONG).show();
+	        	            	
+	        	            	doFinishedWork();
+	        	            }
+	
+	        	            @Override
+	        	            public void onProgress(long total, long current) {
+	        	                // 진행 상황
+	        	            }
+	
+	        	            @Override
+	        	            public void onException(BaasioException e) {
+	        	                // 실패
+	        	            	EditText et = (EditText)rootView.findViewById(R.id.editText_receiver);
+	        	            	et.setText("Download failed");
+	        	            	Toast.makeText(getActivity(), "다운로드가 실패하였습니다",	Toast.LENGTH_LONG).show();
+	        	            	
+	        	            	Log.e(TAG, "다운로드 실패: "+ e.getErrorCode());
+	        	            	
+	        	            	doFinishedWork();
+	        	            }
+	        	        });    		
+	    	}
+		}
 	}
-
 
 	public ReceiverFragment() {
 	}
