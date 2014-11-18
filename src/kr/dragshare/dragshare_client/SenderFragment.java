@@ -43,7 +43,7 @@ public class SenderFragment extends Fragment {
 			// Sending OSC packet
 			//----------------------------------------------------
 			try {
-				OSCPortOut sender = new OSCPortOut(InetAddress.getByName("192.168.0.14"), 3746);
+				OSCPortOut sender = new OSCPortOut(InetAddress.getByName("165.132.107.90"), 3746);
 
 				List<Object> arg = new ArrayList<Object>();
 				for(String uuid : params) {

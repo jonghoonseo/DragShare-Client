@@ -109,7 +109,7 @@ public class ReceiverFragment extends Fragment {
 						Log.i(TAG + "OSC Server", "received");
 
 						if(server.isListening()) {
-							Log.i(TAG + "OSC Server", "Receiver: packet received: listening   " + (String)(arg1.getArguments().get(0)));
+							Log.i(TAG + "OSC Server", "Receiver: packet received: listening   " + (String)(arg1.getArguments().size() + " arguments are received"));
 							
 							// 파일 다운로드
 							receive((String)(arg1.getArguments().get(0)));
@@ -140,7 +140,8 @@ public class ReceiverFragment extends Fragment {
     	downloadFile.setFilename(uuidString+".jpg");
     	
     	// 다운로드
-    	BaasioDownloadAsyncTask downloadFileAsyncTask = downloadFile.fileDownloadInBackground(
+    	@SuppressWarnings("unused")
+		BaasioDownloadAsyncTask downloadFileAsyncTask = downloadFile.fileDownloadInBackground(
     	    localPath       // 다운로드 경로
     	    , new BaasioDownloadCallback() {
 
@@ -168,6 +169,11 @@ public class ReceiverFragment extends Fragment {
     	            }
     	        });
 
+	}
+	
+	protected void receive(ArrayList<String> uuidStrings) {
+		
+		
 	}
 
 
